@@ -2,6 +2,9 @@ package com.example.seguroautos.controller;
 
 import com.example.seguroautos.model.Productor;
 import com.example.seguroautos.repository.ProductorRepository;
+
+import io.swagger.v3.oas.annotations.Operation;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,7 +16,8 @@ public class ProductorController {
 
     @Autowired
     private ProductorRepository productorRepository;
-
+    
+    @Operation(summary = "Obtener productores", description = "Obtiene un listado de todos los productores.")
     @GetMapping
     public List<Productor> getAllProductores() {
         return productorRepository.findAll();

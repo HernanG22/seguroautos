@@ -2,14 +2,23 @@ package com.example.seguroautos.model;
 
 import java.util.List;
 import javax.persistence.*;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 
 @Entity
 public class Productor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @NotBlank(message = "El nombre es obligatorio")
+    @Size(max = 50, message = "El nombre no puede tener más de 50 caracteres")
     private String nombre;
+    @NotBlank(message = "El apellido es obligatorio")
+    @Size(max = 50, message = "El apellido no puede tener más de 50 caracteres")
     private String apellido;
+    @Email(message = "El email debe ser válido")
+    @NotBlank(message = "El email es obligatorio")
     private String email;
 
     // Relación con Clientes

@@ -1,15 +1,25 @@
 package com.example.seguroautos.model;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 @Entity
 public class VehiculoAsegurado {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @NotBlank(message = "La marca es obligatoria")
+    @Size(max = 50, message = "La marca no puede tener más de 50 caracteres")
     private String marca;
+    @NotBlank(message = "El modelo es obligatorio")
+    @Size(max = 50, message = "El modelo no puede tener más de 50 caracteres")
     private String modelo;
+    @NotNull(message = "El año es obligatorio")
     private int año;
+    @NotBlank(message = "La placa es obligatoria")
+    @Size(max = 10, message = "La placa no puede tener más de 10 caracteres")
     private String placa;
 
     // Relación con Cliente
