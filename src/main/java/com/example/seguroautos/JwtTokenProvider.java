@@ -3,78 +3,48 @@ package com.example.seguroautos;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
 
-    @Value("${jwt.secret}")
-    private String secretKey;
+    private final String SECRET_KEY = "your_secret_key"; // Cambia esto a una clave más segura
 
-    @Value("${jwt.expiration}")
-    private long validityInMilliseconds;
-
-    private final UserDetailsService userDetailsService;
-
-    public JwtTokenProvider(UserDetailsService userDetailsService) {
-        this.userDetailsService = userDetailsService;
-    }
-
-    // Método para resolver el token del encabezado Authorization
-    public String resolveToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        return null;
-    }
-
-    // Método para validar el token
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parser()
-                .setSigningKey(secretKey.getBytes()) // Usa el byte[] directamente
-                .parseClaimsJws(token);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    // Método para obtener la autenticación desde el token
-    public Authentication getAuthentication(String token) {
-        UserDetails userDetails = userDetailsService.loadUserByUsername(getUsername(token));
-        return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
-    }
-
-    // Método para obtener el nombre de usuario desde el token
-    public String getUsername(String token) {
-        Claims claims = Jwts.parser()
-            .setSigningKey(secretKey.getBytes()) // Usa el byte[] directamente
-            .parseClaimsJws(token)
-            .getBody();
-        return claims.getSubject();
-    }
-
-    // Método para generar un nuevo token
     public String generateToken(Authentication authentication) {
-        Claims claims = Jwts.claims().setSubject(authentication.getName());
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Date now = new Date();
-        Date validity = new Date(now.getTime() + validityInMilliseconds);
+        Date expiryDate = new Date(now.getTime() + 86400000); // 1 día de expiración
 
         return Jwts.builder()
-            .setClaims(claims)
-            .setIssuedAt(now)
-            .setExpiration(validity)
-            .signWith(SignatureAlgorithm.HS256, secretKey.getBytes()) // Usa el byte[] directamente
-            .compact();
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .compact();
+    }
+
+    public Claims getClaimsFromToken(String token) {
+        return Jwts.parser()
+                .setSigningKey(SECRET_KEY)
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    public String getUsernameFromToken(String token) {
+        return getClaimsFromToken(token).getSubject();
+    }
+
+    public boolean validateToken(String token, UserDetails userDetails) {
+        String username = getUsernameFromToken(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    private boolean isTokenExpired(String token) {
+        Date expiration = getClaimsFromToken(token).getExpiration();
+        return expiration.before(new Date());
     }
 }
